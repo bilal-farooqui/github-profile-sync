@@ -10,7 +10,8 @@ import os
 import secrets
 from urllib.parse import urlencode
 from dotenv import load_dotenv
-from flask import Flask, render_to_status, redirect, render_template, request, session, url_for, flash
+import requests
+from flask import Flask, redirect, render_template, request, session, url_for, flash
 
 # Load environment variables from .env file
 load_dotenv()
@@ -68,6 +69,99 @@ def login():
 
     authorization_url = f"{GITHUB_AUTHORIZE_URL}?{urlencode(params)}"
     return redirect(authorization_url)
+
+
+@app.route("/callback")
+def callback():
+    """
+    Handles the OAuth callback from GitHub.
+    1. Verifies the returned CSRF 'state' against session["oauth_state"].
+    2. Exchanges the temporary authorization 'code' for an access token via POST.
+    3. Fetches live user profile data from GitHub REST API via GET.
+    4. Stores the profile data in session and redirects to /profile.
+    """
+    returned_state = request.args.get("state")
+    expected_state = session.pop("oauth_state", None)
+
+    # 1. CSRF State Verification
+    if not returned_state or returned_state != expected_state:
+        flash("State verification failed (possible CSRF attack). Please try logging in again.", "error")
+        return redirect(url_for("index"))
+
+    # Check for authorization errors returned by GitHub
+    error = request.args.get("error")
+    if error:
+        error_description = request.args.get("error_description", "Unknown authorization error.")
+        flash(f"GitHub Authorization Error: {error_description}", "error")
+        return redirect(url_for("index"))
+
+    code = request.args.get("code")
+    if not code:
+        flash("Authorization code missing from GitHub callback response.", "error")
+        return redirect(url_for("index"))
+
+    # 2. Token Exchange via requests.post
+    token_payload = {
+        "client_id": GITHUB_CLIENT_ID,
+        "client_secret": GITHUB_CLIENT_SECRET,
+        "code": code,
+        "redirect_uri": GITHUB_REDIRECT_URI
+    }
+    token_headers = {
+        "Accept": "application/json"
+    }
+
+    try:
+        token_response = requests.post(
+            GITHUB_TOKEN_URL,
+            data=token_payload,
+            headers=token_headers,
+            timeout=10
+        )
+    except requests.RequestException as exc:
+        flash(f"Network error while connecting to GitHub Token URL: {exc}", "error")
+        return redirect(url_for("index"))
+
+    if token_response.status_code != 200:
+        flash(f"Failed to exchange token. HTTP Status: {token_response.status_code}", "error")
+        return redirect(url_for("index"))
+
+    token_data = token_response.json()
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        error_msg = token_data.get("error_description", token_data.get("error", "No access token received."))
+        flash(f"Token exchange error: {error_msg}", "error")
+        return redirect(url_for("index"))
+
+    # 3. Live User Profile Fetch via requests.get
+    user_headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/vnd.github+json"
+    }
+
+    try:
+        user_response = requests.get(
+            GITHUB_USER_API_URL,
+            headers=user_headers,
+            timeout=10
+        )
+    except requests.RequestException as exc:
+        flash(f"Network error while fetching profile from GitHub API: {exc}", "error")
+        return redirect(url_for("index"))
+
+    if user_response.status_code != 200:
+        flash(f"Failed to fetch user profile. HTTP Status: {user_response.status_code}", "error")
+        return redirect(url_for("index"))
+
+    github_profile = user_response.json()
+
+    # Store profile and access token in session
+    session["github_profile"] = github_profile
+    session["access_token"] = access_token
+
+    flash("Successfully authenticated with GitHub!", "info")
+    return redirect(url_for("profile"))
 
 
 @app.route("/logout")

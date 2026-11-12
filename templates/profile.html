@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Profile Sync - {{ profile.login }}</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-title svg {
+            width: 32px;
+            height: 32px;
+            fill: #f8fafc;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .btn-logout {
+            background-color: transparent;
+            color: #94a3b8;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover {
+            background-color: #ef4444;
+            border-color: #ef4444;
+            color: #ffffff;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .alert-success {
+            background-color: rgba(34, 197, 94, 0.15);
+            border: 1px solid #22c55e;
+            color: #4ade80;
+        }
+
+        .alert-error {
+            background-color: rgba(239, 68, 68, 0.15);
+            border: 1px solid #ef4444;
+            color: #f87171;
+        }
+
+        .alert-info {
+            background-color: rgba(59, 130, 246, 0.15);
+            border: 1px solid #3b82f6;
+            color: #60a5fa;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            padding: 1.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Profile Card */
+        .profile-sidebar {
+            text-align: center;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid #3b82f6;
+            margin-bottom: 1rem;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .profile-username {
+            font-size: 0.95rem;
+            color: #38bdf8;
+            margin-bottom: 0.75rem;
+        }
+
+        .profile-bio {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            line-height: 1.5;
+            margin-bottom: 1.25rem;
+            font-style: italic;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #334155;
+        }
+
+        .stat-box {
+            background-color: #0f172a;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #334155;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Form Styling */
+        .card-header {
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .card-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .card-header p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #cbd5e1;
+        }
+
+        .label-hint {
+            font-weight: 400;
+            color: #64748b;
+            font-size: 0.75rem;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="url"],
+        textarea {
+            width: 100%;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: #f8fafc;
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn-submit {
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.85rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .btn-submit:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        /* JSON Preview Section */
+        .json-section {
+            margin-top: 2rem;
+        }
+
+        details {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        summary {
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        summary:hover {
+            background-color: #243248;
+        }
+
+        .json-viewer {
+            background-color: #0b1120;
+            padding: 1.25rem;
+            overflow-x: auto;
+            border-top: 1px solid #334155;
+        }
+
+        pre {
+            font-family: "Fira Code", Consolas, Monaco, "Courier New", monospace;
+            font-size: 0.825rem;
+            color: #38bdf8;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-title">
+                <svg viewBox="0 0 24 24">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path>
+                </svg>
+                <h1>GitHub Profile Sync</h1>
+            </div>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Sign Out</a>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else ('error' if category == 'error' else 'info') }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="grid">
+            <!-- Sidebar: Live GitHub Profile Card -->
+            <div class="card profile-sidebar">
+                <img src="{{ profile.avatar_url or 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png' }}" alt="{{ profile.login }}" class="avatar">
+                <h2 class="profile-name">{{ profile.name or profile.login }}</h2>
+                <div class="profile-username">@{{ profile.login }}</div>
+
+                {% if profile.bio %}
+                    <p class="profile-bio">"{{ profile.bio }}"</p>
+                {% endif %}
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value">{{ profile.public_repos if profile.public_repos is not none else 0 }}</div>
+                        <div class="stat-label">Repositories</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">{{ profile.followers if profile.followers is not none else 0 }}</div>
+                        <div class="stat-label">Followers</div>
+                    </div>
+                </div>
+
+                {% if profile.location %}
+                    <div style="margin-top: 1rem; font-size: 0.85rem; color: #94a3b8;">
+                        &#x1F4CD; {{ profile.location }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Main Content: Profile Completion Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Complete Your Profile</h2>
+                    <p>Review fetched GitHub data, add missing professional details, and save to <code>profiles.json</code>.</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('profile') }}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="full_name">Full Name <span class="label-hint">(from GitHub)</span></label>
+                            <input type="text" id="full_name" name="full_name" value="{{ form_data.full_name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address <span class="label-hint">(from GitHub or manual)</span></label>
+                            <input type="email" id="email" name="email" value="{{ form_data.email }}" placeholder="your.email@example.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="headline">Professional Headline</label>
+                        <input type="text" id="headline" name="headline" value="{{ form_data.headline }}" placeholder="e.g., Full Stack Python Developer | Open Source Contributor">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="location">Location <span class="label-hint">(from GitHub)</span></label>
+                            <input type="text" id="location" name="location" value="{{ form_data.location }}" placeholder="e.g., San Francisco, CA">
+                        </div>
+                        <div class="form-group">
+                            <label for="portfolio_url">Portfolio / Website URL</label>
+                            <input type="url" id="portfolio_url" name="portfolio_url" value="{{ form_data.portfolio_url }}" placeholder="https://yourportfolio.dev">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bio">Bio / Summary <span class="label-hint">(from GitHub)</span></label>
+                        <textarea id="bio" name="bio" rows="3" placeholder="Tell us about yourself and your background...">{{ form_data.bio }}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="skills">Skills &amp; Technologies <span class="label-hint">(comma-separated)</span></label>
+                        <input type="text" id="skills" name="skills" value="{{ form_data.skills }}" placeholder="e.g., Python, Flask, Requests, Docker, REST APIs, Git">
+                    </div>
+
+                    <button type="submit" class="btn-submit">Save Completed Profile</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- JSON Preview & Debug Section -->
+        <div class="json-section">
+            <details {% if saved_profile %}open{% endif %}>
+                <summary>
+                    <span>&#x1F4BE; Saved Profile Structure (<code>profiles.json</code>)</span>
+                    <span style="font-size: 0.8rem; color: #64748b;">Click to toggle</span>
+                </summary>
+                <div class="json-viewer">
+                    <pre><code>{{ saved_profile_json or '// No profile saved yet. Complete and submit the form above to populate profiles.json' }}</code></pre>
+                </div>
+            </details>
+
+            <details>
+                <summary>
+                    <span>&#x1F4E1; Raw GitHub REST API Response (<code>GET https://api.github.com/user</code>)</span>
+                    <span style="font-size: 0.8rem; color: #64748b;">Click to toggle</span>
+                </summary>
+                <div class="json-viewer">
+                    <pre><code>{{ raw_github_json }}</code></pre>
+                </div>
+            </details>
+        </div>
+    </div>
+</body>
+</html>

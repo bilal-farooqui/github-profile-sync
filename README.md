@@ -2,8 +2,6 @@
 
 A beginner-friendly, robust Python web application that authenticates users via **GitHub OAuth (GitHub App)**, fetches their live user profile from the **GitHub REST API** (`GET https://api.github.com/user`) using Python's `requests` library, displays a pre-filled profile completion form, and saves the synchronized profile locally to `profiles.json`.
 
-> **Note on Repository Name:** While this repository and folder are named `linkedin-profile-sync` for assignment continuity, the application implements full **GitHub OAuth 2.0 (GitHub App)** integration and live GitHub REST API data synchronization.
-
 ---
 
 ## Features
@@ -23,7 +21,7 @@ A beginner-friendly, robust Python web application that authenticates users via 
 ## Project Structure
 
 ```text
-linkedin-profile-sync/
+github-profile-sync/
 ├── .env                 # Local secrets (ignored by Git)
 ├── .env.example         # Safe environment template committed to Git
 ├── .gitignore           # Ignores .venv/, __pycache__/, .env, profiles.json
@@ -39,10 +37,9 @@ linkedin-profile-sync/
 
 ## Step-by-Step Setup & Installation
 
-### 1. Clone the Repository
+### 1. Project Directory
 ```bash
-git clone https://github.com/bilal-farooqui/linkedin-profile-sync.git
-cd linkedin-profile-sync
+cd github-profile-sync
 ```
 
 ### 2. Create and Activate a Virtual Environment

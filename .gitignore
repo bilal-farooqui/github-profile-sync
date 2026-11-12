@@ -1,0 +1,19 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python bytecode & cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment secrets (NEVER COMMIT)
+.env
+
+# Local database / storage
+profiles.json
+
+# Local specs
+SPEC.md

@@ -114,7 +114,6 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
         }
 
-        /* Profile Card */
         .profile-sidebar {
             text-align: center;
         }
@@ -177,7 +176,6 @@
             letter-spacing: 0.05em;
         }
 
-        /* Form Styling */
         .card-header {
             margin-bottom: 1.25rem;
             padding-bottom: 0.75rem;
@@ -270,7 +268,6 @@
             transform: translateY(-1px);
         }
 
-        /* JSON Preview Section */
         .json-section {
             margin-top: 2rem;
         }
@@ -326,7 +323,6 @@
             <a href="{{ url_for('logout') }}" class="btn-logout">Sign Out</a>
         </header>
 
-        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -338,7 +334,6 @@
         {% endwith %}
 
         <div class="grid">
-            <!-- Sidebar: Live GitHub Profile Card -->
             <div class="card profile-sidebar">
                 <img src="{{ profile.avatar_url or 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png' }}" alt="{{ profile.login }}" class="avatar">
                 <h2 class="profile-name">{{ profile.name or profile.login }}</h2>
@@ -366,7 +361,6 @@
                 {% endif %}
             </div>
 
-            <!-- Main Content: Profile Completion Form -->
             <div class="card">
                 <div class="card-header">
                     <h2>Complete Your Profile</h2>
@@ -416,7 +410,6 @@
             </div>
         </div>
 
-        <!-- JSON Preview & Debug Section -->
         <div class="json-section">
             <details {% if saved_profile %}open{% endif %}>
                 <summary>

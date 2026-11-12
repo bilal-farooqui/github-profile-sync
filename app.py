@@ -1,12 +1,3 @@
-"""
-GitHub Profile Sync Application
-================================
-A beginner-friendly Python web application using Flask and requests.
-Authenticates users via GitHub OAuth (GitHub App), fetches live user
-profile data from GitHub's REST API, and syncs profile completion details
-into a local JSON storage file (profiles.json).
-"""
-
 import os
 import json
 import secrets
@@ -16,31 +7,23 @@ from dotenv import load_dotenv
 import requests
 from flask import Flask, redirect, render_template, request, session, url_for, flash
 
-# Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
 
-# Application Configuration
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback-secret-key-for-development")
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "")
 GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI", "http://localhost:8000/callback")
 
-# JSON Database File Path
 PROFILES_FILE = os.path.join(os.path.dirname(__file__), "profiles.json")
 
-# GitHub OAuth Endpoints
 GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
 GITHUB_USER_API_URL = "https://api.github.com/user"
 
 
 def load_saved_profiles() -> dict:
-    """
-    Reads and parses the local profiles.json file.
-    Returns an empty dictionary if the file does not exist or contains invalid JSON.
-    """
     if not os.path.exists(PROFILES_FILE):
         return {}
     try:
@@ -51,9 +34,6 @@ def load_saved_profiles() -> dict:
 
 
 def save_profile(user_id: str, profile_data: dict) -> None:
-    """
-    Saves or updates a user profile entry in profiles.json keyed by their GitHub User ID.
-    """
     profiles = load_saved_profiles()
     profiles[str(user_id)] = profile_data
     with open(PROFILES_FILE, "w", encoding="utf-8") as file:
@@ -62,18 +42,12 @@ def save_profile(user_id: str, profile_data: dict) -> None:
 
 @app.route("/")
 def index():
-    """
-    Renders the login landing page.
-    Checks whether .env credentials are properly configured and displays
-    a helpful warning banner if placeholder values are still detected.
-    """
     config_warning = None
     if not GITHUB_CLIENT_ID or GITHUB_CLIENT_ID == "your-github-app-client-id":
         config_warning = "GITHUB_CLIENT_ID is not configured in .env."
     elif not GITHUB_CLIENT_SECRET or GITHUB_CLIENT_SECRET == "PASTE_YOUR_GITHUB_CLIENT_SECRET_HERE":
         config_warning = "GITHUB_CLIENT_SECRET contains placeholder text. Please update .env with your real secret."
 
-    # If user is already authenticated in session, redirect directly to profile
     if "github_profile" in session:
         return redirect(url_for("profile"))
 
@@ -82,12 +56,6 @@ def index():
 
 @app.route("/login")
 def login():
-    """
-    Initiates GitHub OAuth flow.
-    Generates a secure random state token to prevent CSRF attacks,
-    saves it into the Flask session, and redirects user to GitHub's authorization page.
-    Note: As this is a GitHub App, no 'scope' parameter is passed.
-    """
     state = secrets.token_urlsafe(16)
     session["oauth_state"] = state
 
@@ -103,22 +71,13 @@ def login():
 
 @app.route("/callback")
 def callback():
-    """
-    Handles the OAuth callback from GitHub.
-    1. Verifies the returned CSRF 'state' against session["oauth_state"].
-    2. Exchanges the temporary authorization 'code' for an access token via POST.
-    3. Fetches live user profile data from GitHub REST API via GET.
-    4. Stores the profile data in session and redirects to /profile.
-    """
     returned_state = request.args.get("state")
     expected_state = session.pop("oauth_state", None)
 
-    # 1. CSRF State Verification
     if not returned_state or returned_state != expected_state:
         flash("State verification failed (possible CSRF attack). Please try logging in again.", "error")
         return redirect(url_for("index"))
 
-    # Check for authorization errors returned by GitHub
     error = request.args.get("error")
     if error:
         error_description = request.args.get("error_description", "Unknown authorization error.")
@@ -130,7 +89,6 @@ def callback():
         flash("Authorization code missing from GitHub callback response.", "error")
         return redirect(url_for("index"))
 
-    # 2. Token Exchange via requests.post
     token_payload = {
         "client_id": GITHUB_CLIENT_ID,
         "client_secret": GITHUB_CLIENT_SECRET,
@@ -164,7 +122,6 @@ def callback():
         flash(f"Token exchange error: {error_msg}", "error")
         return redirect(url_for("index"))
 
-    # 3. Live User Profile Fetch via requests.get
     user_headers = {
         "Authorization": f"Bearer {access_token}",
         "Accept": "application/vnd.github+json"
@@ -186,7 +143,6 @@ def callback():
 
     github_profile = user_response.json()
 
-    # Store profile and access token in session
     session["github_profile"] = github_profile
     session["access_token"] = access_token
 
@@ -196,12 +152,6 @@ def callback():
 
 @app.route("/profile", methods=["GET", "POST"])
 def profile():
-    """
-    Renders the profile dashboard and completion form.
-    - Pre-fills form fields using fetched GitHub data or existing saved record.
-    - On POST: Validates input, merges GitHub metadata with user additions,
-      and saves to profiles.json.
-    """
     github_profile = session.get("github_profile")
     if not github_profile:
         flash("Please sign in with GitHub to view your profile.", "error")
@@ -221,7 +171,6 @@ def profile():
         skills_raw = request.form.get("skills", "").strip()
         skills_list = [s.strip() for s in skills_raw.split(",") if s.strip()] if skills_raw else []
 
-        # Construct merged profile dictionary
         merged_profile = {
             "github_id": github_profile.get("id"),
             "username": github_profile.get("login"),
@@ -239,12 +188,10 @@ def profile():
             "synced_at": datetime.now(timezone.utc).isoformat()
         }
 
-        # Save to local profiles.json
         save_profile(user_id, merged_profile)
         flash("Profile completed and successfully saved to profiles.json!", "success")
         existing_saved = merged_profile
 
-    # Determine pre-fill data for the form
     form_data = {
         "full_name": (existing_saved.get("full_name") if existing_saved else github_profile.get("name")) or github_profile.get("login") or "",
         "email": (existing_saved.get("email") if existing_saved else github_profile.get("email")) or "",
@@ -270,14 +217,10 @@ def profile():
 
 @app.route("/logout")
 def logout():
-    """
-    Logs out the user by clearing the session and redirects to the login page.
-    """
     session.clear()
     flash("You have been signed out successfully.", "info")
     return redirect(url_for("index"))
 
 
 if __name__ == "__main__":
-    # Run development server on localhost:8000
     app.run(host="localhost", port=8000, debug=True)
